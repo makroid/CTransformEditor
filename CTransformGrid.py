@@ -308,6 +308,40 @@ class TMatrix:
         return TMatrix(a, b, c, d)
 
 
+class CQuadraticFunc:
+
+    def __init__(self, a, b, c):
+        self._a = a
+        self._b = b
+        self._c = c
+
+    def __call__(self, z: complex) -> complex:
+        return self._a * z * z + self._b * z + self._c
+
+    @staticmethod
+    def create(p):
+        a = complex(p[0], p[1])
+        b = complex(p[2], p[3])
+        c = complex(p[4], p[5])
+        return CQuadraticFunc(a, b, c)
+
+
+class CExponentialFunc:
+
+    def __init__(self, a, b):
+        self._a = a
+        self._b = b
+
+    def __call__(self, z: complex) -> complex:
+        return self._a * z ** self._b
+
+    @staticmethod
+    def create(p):
+        a = complex(p[0], p[1])
+        b = complex(p[2], p[3])
+        return CExponentialFunc(a, b)
+
+
 class CLinFunc:
 
     def __init__(self, func=lambda z:z, a=complex(1,0), b=complex(0,0)):
@@ -344,6 +378,24 @@ class TFunctions:
                 "name" : "hyperbolic_map",
                 "args" : [["p", 1, 2, 1, 0.001]],
                 "func" : TMatrix.create_hyperbolic_map
+            },
+            {
+                "name": "quadratic_map",
+                "args": [["a_r", -2, 4, 1, 0.1],
+                         ["a_i", -2, 4, 0, 0.1],
+                         ["b_r", -2, 4, 0, 0.1],
+                         ["b_i", -2, 4, 0, 0.1],
+                         ["c_r", -2, 4, 0, 0.1],
+                         ["c_i", -2, 4, 0, 0.1]],
+                "func": CQuadraticFunc.create
+            },
+            {
+                "name": "exponential_map",
+                "args": [["a_r", -2, 4, 1, 0.1],
+                         ["a_i", -2, 4, 0, 0.1],
+                         ["b_r", -2, 4, 1, 0.1],
+                         ["b_i", -2, 4, 0, 0.1]],
+                "func": CExponentialFunc.create
             },
             {
                 "name" : "moebius_map",

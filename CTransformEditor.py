@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QWidget, QApplication, QHBoxLayout, QColorDialog, \
-    QPushButton, QLabel, QCheckBox, QComboBox, QSlider, QFormLayout
+from PyQt5.QtWidgets import QWidget, QApplication, QHBoxLayout, QVBoxLayout, QColorDialog, \
+    QPushButton, QLabel, QCheckBox, QComboBox, QSlider, QFormLayout, QTabWidget, QSpinBox
 from PyQt5.QtGui import QPainter, QColor, QFont, QPixmap, QImage
 from PyQt5.QtCore import Qt
 
@@ -183,8 +183,13 @@ class GridWidget(QWidget):
 
 
     def to_grid(self):
-        xrange = Range(-6, 6, self.grid_cols)
-        yrange = Range(0, 2, self.grid_rows)
+        xmin = self.control_widget.spin_xmin.value()
+        xdelta = self.control_widget.spin_xdelta.value()
+        ymin = self.control_widget.spin_ymin.value()
+        ydelta = self.control_widget.spin_ydelta.value()
+
+        xrange = Range(xmin, xmin+xdelta, self.grid_cols)
+        yrange = Range(ymin, ymin+ydelta, self.grid_rows)
         filled = np.zeros_like(self.grid, dtype=np.uint)
         for r in range(self.grid_rows):
             for c in range(self.grid_cols):
@@ -255,6 +260,8 @@ class ControlWidget(QWidget):
         self.t_funcs = TFunctions()
         self.cur_t_func = TMatrix.create_identity_map()
 
+        self.ctrl1_widget = QWidget()
+
         self.color_button = QColorButton()
 
         self.check_lines = QCheckBox("Draw grid")
@@ -269,18 +276,53 @@ class ControlWidget(QWidget):
 
         self.combo_func.activated[str].connect(self.onComboActivated)
 
-        self.layout = QFormLayout()
+        self.layout_c1 = QFormLayout()
+        self.layout_c1.addRow("Color: ", self.color_button)
+        self.layout_c1.addRow("Do:", self.check_lines)
+        self.layout_c1.addRow("Func:", self.combo_func)
 
-        self.layout.addRow("Color: ", self.color_button)
-        self.layout.addRow("Do:", self.check_lines)
-        self.layout.addRow("Func:", self.combo_func)
+        self.ctrl1_widget.setLayout(self.layout_c1)
 
+
+        self.ctrl2_widget = QWidget()
+
+        self.layout_c2 = QFormLayout()
+        self.spin_xmin = QSpinBox()
+        self.spin_xmin.setRange(-30, 30)
+        self.spin_xmin.setValue(-3)
+        self.spin_xmin.valueChanged[int].connect(lambda x: self.update_output_canvas())
+        self.layout_c2.addRow("x min: ", self.spin_xmin)
+        self.spin_xdelta = QSpinBox()
+        self.spin_xdelta.setRange(1, 100)
+        self.spin_xdelta.setValue(6)
+        self.spin_xdelta.valueChanged[int].connect(lambda x: self.update_output_canvas())
+        self.layout_c2.addRow("x delta: ", self.spin_xdelta)
+        self.spin_ymin = QSpinBox()
+        self.spin_ymin.setRange(-30, 30)
+        self.spin_ymin.setValue(0)
+        self.spin_ymin.valueChanged[int].connect(lambda x: self.update_output_canvas())
+        self.layout_c2.addRow("y min: ", self.spin_ymin)
+        self.spin_ydelta = QSpinBox()
+        self.spin_ydelta.setRange(1, 100)
+        self.spin_ydelta.setValue(2)
+        self.spin_ydelta.valueChanged[int].connect(lambda x: self.update_output_canvas())
+        self.layout_c2.addRow("y delta: ", self.spin_ydelta)
+
+        self.ctrl2_widget.setLayout(self.layout_c2)
+
+
+        self.layout = QVBoxLayout()
+
+        self.tabs_widget = QTabWidget()
+        self.tabs_widget.addTab(self.ctrl1_widget, "Function")
+        self.tabs_widget.addTab(self.ctrl2_widget, "Panel")
+        self.layout.addWidget(self.tabs_widget)
         self.setLayout(self.layout)
 
 
     def onComboActivated(self, name):
         for slider in self.param_sliders:
-            self.layout.removeRow(slider)
+            self.layout_c1.removeRow(slider)
         self.param_sliders = []
         args = self.t_funcs.get_f_args_by_name(name)
         if args:
@@ -292,7 +334,7 @@ class ControlWidget(QWidget):
                 slider.setTickInterval(1)
                 slider.valueChanged[int].connect(self.slider_val_changed)
                 self.param_sliders.append(slider)
-                self.layout.addRow(arg[0], slider)
+                self.layout_c1.addRow(arg[0], slider)
         self.update_output_canvas()
 
 
