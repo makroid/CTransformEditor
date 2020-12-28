@@ -2,7 +2,7 @@
 
 ### Complex transforms a colorized input raster by a given parameterized transformation.
 
-![CTransformEditor](https://i.imgur.com/sMn6TFr.png)
+![CTransformEditor](https://i.imgur.com/CvzzeZ5.png)
 
 * Left side shows a rasterized input image
 * The raster is embedded into a complex plane
