@@ -62,6 +62,8 @@ class GridWidget(QWidget):
         self.y_prev = -1
 
         self.activeCell = None
+        self.key_r_down = False
+        self.key_c_down = False
 
         self.setMinimumSize(self.grid_cols*self.tile_size_x, self.grid_rows*self.tile_size_y)
 
@@ -116,13 +118,28 @@ class GridWidget(QWidget):
                 self.activeCell.right()
             self.repaint()
 
+        if event.key() == Qt.Key_R:
+            self.key_r_down = True
+        if event.key() == Qt.Key_C:
+            self.key_c_down = True
+
+
+    def keyReleaseEvent(self, event):
+        self.key_r_down = False
+        self.key_c_down = False
+
 
     def mousePressEvent(self, event):
         x = event.x()
         y = event.y()
         if event.buttons() == Qt.LeftButton:
             self.activeCell = None
-            self.fillCell(x, y)
+            if self.key_r_down:
+                self.fillRow(x, y)
+            elif self.key_c_down:
+                self.fillColumn(x, y)
+            else:
+                self.fillCell(x, y)
             self.repaint()
         if event.buttons() == Qt.RightButton:
             co = self.get_cell_coords(x, y)
@@ -161,6 +178,22 @@ class GridWidget(QWidget):
         co = self.get_cell_coords(x,y)
         if co:
             self.grid[co.r][co.c] = self.control_widget.color_button.color_rgb()
+            self.parent.update_output_canvas()
+
+
+    def fillRow(self, x, y):
+        co = self.get_cell_coords(x,y)
+        if co:
+            for c in range(self.grid_cols):
+                self.grid[co.r][c] = self.control_widget.color_button.color_rgb()
+            self.parent.update_output_canvas()
+
+
+    def fillColumn(self, x, y):
+        co = self.get_cell_coords(x,y)
+        if co:
+            for r in range(self.grid_rows):
+                self.grid[r][co.c] = self.control_widget.color_button.color_rgb()
             self.parent.update_output_canvas()
 
 
@@ -418,7 +451,11 @@ class MainWidget(QWidget):
 
 
     def keyPressEvent(self, event):
-        self.grid_widget.keyPressEvent(event)
+        self.grid_widget_src.keyPressEvent(event)
+
+
+    def keyReleaseEvent(self, event):
+        self.grid_widget_src.keyReleaseEvent(event)
 
 
     def update_output_canvas(self):
