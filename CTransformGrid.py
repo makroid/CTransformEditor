@@ -354,6 +354,26 @@ class CLinFunc:
 
 
 
+class FunctionSeries:
+    def __init__(self):
+        self.series = []
+
+    def clear(self):
+        self.series = []
+        self.series.append(TMatrix.create_identity_map())
+
+    def append(self, func):
+        self.series.append(func)
+
+    def pop(self):
+        self.series.pop()
+
+    def __call__(self, z: complex) -> complex:
+        for func in self.series[::-1]:
+            z = func(z)
+        return z
+
+
 class TFunctions:
 
     def __init__(self):

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QHBoxLayout, QVBoxLayout, QCo
 from PyQt5.QtGui import QPainter, QColor, QFont, QPixmap, QImage
 from PyQt5.QtCore import Qt
 
-from CTransformGrid import Range, Grid, TFunctions, TMatrix
+from CTransformGrid import Range, Grid, TFunctions, FunctionSeries
 
 import numpy as np
 
@@ -291,13 +291,13 @@ class ControlWidget(QWidget):
         self.parent = parent
 
         self.t_funcs = TFunctions()
-        self.cur_t_func = TMatrix.create_identity_map()
+        self.cur_func_series = FunctionSeries()
 
         self.ctrl1_widget = QWidget()
 
         self.color_button = QColorButton()
 
-        self.check_lines = QCheckBox("Draw grid")
+        self.check_lines = QCheckBox("")
         self.check_lines.setChecked(False)
         self.check_lines.stateChanged.connect(lambda: self.check_btn_state(self.check_lines))
 
@@ -309,10 +309,20 @@ class ControlWidget(QWidget):
 
         self.combo_func.activated[str].connect(self.onComboActivated)
 
+
+        self.do_func_append = False
+        self.append_func_btn = QPushButton("  +  ")
+        self.append_func_btn.clicked.connect(self.append_func_btn_clicked)
+        self.clear_func_btn = QPushButton(" clear ")
+        self.clear_func_btn.clicked.connect(self.clear_func_btn_clicked)
+
         self.layout_c1 = QFormLayout()
         self.layout_c1.addRow("Color: ", self.color_button)
-        self.layout_c1.addRow("Do:", self.check_lines)
+        self.layout_c1.addRow("Draw grid:", self.check_lines)
         self.layout_c1.addRow("Func:", self.combo_func)
+        self.layout_c1.addRow("Append", self.append_func_btn)
+        self.layout_c1.addRow("Clear", self.clear_func_btn)
+
 
         self.ctrl1_widget.setLayout(self.layout_c1)
 
@@ -377,9 +387,13 @@ class ControlWidget(QWidget):
 
 
     def update_output_canvas(self):
+
         func_name = self.combo_func.currentText()
-        self.cur_t_func = self.compose_func(func_name)
+        self.cur_func_series.append(self.compose_func(func_name))
+
         self.parent.update_output_canvas()
+
+        self.cur_func_series.pop()
 
 
     def compose_func(self, f_name):
@@ -396,8 +410,24 @@ class ControlWidget(QWidget):
 
 
     def check_btn_state(self, b):
-        if b.text() == "Draw grid":
+        if b.text() == "":
             self.parent.update_output_canvas()
+
+
+    def append_func_btn_clicked(self):
+        self.do_func_append = True
+        func_name = self.combo_func.currentText()
+        t_func = self.compose_func(func_name)
+        self.cur_func_series.append(t_func)
+        pass
+
+
+    def clear_func_btn_clicked(self):
+        self.do_func_append = False
+        self.cur_func_series.clear()
+        self.update_output_canvas()
+        print("clear")
+        pass
 
 
 
@@ -459,7 +489,7 @@ class MainWidget(QWidget):
 
 
     def update_output_canvas(self):
-        t_grid = self.grid_widget_src.to_grid().transform_by(self.control_widget.cur_t_func)
+        t_grid = self.grid_widget_src.to_grid().transform_by(self.control_widget.cur_func_series)
         canvas = t_grid.draw_on_canvas(do_fill=True,
                                        do_outlines=self.control_widget.check_lines.isChecked())
         self.output_widget.update_pixmap(canvas)
